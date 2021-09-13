@@ -20,9 +20,11 @@ this allows the user to pipe commands together with the window id never having t
 ### ugh
 ```ugh``` holds open the X connection, acting as a *de facto* wm.  there's a few key combinations supported:
 
-ctrl + mod1 + enter - spawns the lancher_cmd
-mod1 + [shift +] tab - cycle through visible windows
-ctrl + mod1 + q - cleanly quits ugh: destroys remaining windows and releases its connection to the xserver
+```ctrl + mod1 + enter``` - spawns the lancher_cmd
+
+```mod1 + [shift +] tab``` - cycle through visible windows
+
+```ctrl + mod1 + q``` - cleanly quits ugh: destroys remaining windows and releases its connection to the xserver
 
 these are all defined in ```ugh.c```.  they're rather hardcoded in, but there's so few of them it's trivial to change.
 
@@ -48,12 +50,12 @@ TODO: cycle through all the child windows as well.
 TODO: cycle through all the child windows as well. 
 
 ### ugh-move
-```ugh-move [window id] <x> <y>``` takes a window id as well as x,y coordinates on screen to change the window's origin
+```ugh-move [window id] <x> <y>``` takes a window id as well as x,y coordinates on screen to change the window's origin.  if no id or a bad id, silently exits.
 
 note:  this does not raise the window
 
 ### ugh-resize
-```ugh-resize [window id] <w> <h>``` takes a window id as well as the new width and height to change the window's size
+```ugh-resize [window id] <w> <h>``` takes a window id as well as the new width and height to change the window's size.  if no id or a bad id, silently exits.
 
 note:  this does not raise the window
 
@@ -63,12 +65,12 @@ note:  this does not raise the window
 note:  this does not raise the window
 
 ### ugh-hide
-```ugh-hide [window id]``` takes a window id and unmaps the window, hiding it.
+```ugh-hide [window id]``` takes a window id and unmaps the window, hiding it.  if no id or a bad id, silently exits.
 
 hidden windows are still searchable via ```ugh-id``` and ```ugh-list```.
 
 ### ugh-lower
-```ugh-lower [window id]``` takes a window id and moves the window to the bottom of the stack.
+```ugh-lower [window id]``` takes a window id and moves the window to the bottom of the stack.  if no id or a bad id, silently exits.
 
 ### ugh-raise
 ```ugh-raise [window id]``` takes a window id and moves the window to the top of the stack.  if no id or a bad id, silently exits.
