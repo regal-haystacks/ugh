@@ -1,87 +1,78 @@
-# ugh
-lazy, scriptable x11 wm tools
+# ugh.
+a collection of silly tools for x11 written in c99, requiring only stdlib and xlib.
+
 ## rationale
-maybe sometimes you don't need a de.  or a wm.  maybe you're like me and rarely have more open than a few terminals and you get bored.  
+a dumb experiment in more unix-like tools for x11.  turning you and your shell into the window manager.  because why let the machines do all the work for you?  :angry::angry::angry:
 
-while ```ugh``` proper definitely should not be run with another wm/de running, the remaining tools just parse input and issue X server requests for window manipulation.  they're meant to be used in conjunction with shell scripts rather than typing all the chains together every time.
+i didn't bother writing a hotkey daemon or launcher because those exist in spades and maybe you don't need one.  maybe you just need a few terminals and a browser open and full screen.  besides, start a terminal before you run ```ugh-fm``` in your .xsession/.xinitrc and you can make the rest happen yourself.
 
-don't like a certain behavior?  these are tiny programs in C99.  just change them and recompile.  it takes a second or two to recompile all of these on my 800MHz laptop.  you don't have any excuse.
+#### what ugh does not do
+aside from the focus manager, *ugh* does not manage your windows.  there are no decorations or buttons or menus or keymappings to learn or configuration files.  hell, it doesn't even hog up memory.  ```ugh-fm``` consumes a few kilobytes of RAM and only a few xlib calls are made.  it will spend most of it's time blocked waiting for a few different mouse-related x events.
 
-## requirements
-these being x11 tools means you need to be running x11, but in terms of compiling the source you just need the xlib and stdlib headers.  nothing fancy here.
+by extension, none of these utilize the Substructure or Structure masks with the x server, so other utilities could be written that do use them to control behavior as well as draw decorations around the windows or something.
 
-these were written, tested, and used on *openbsd/i386 6.9*.  given the rather conservative nature of the openbsd project, i'd imagine these tools should compile on any \*nix system supported by x11 with no code modification.  but i also haven't really used linux since before smartphones were a thing so idfk.
+## provided tools
+note: most of the supplied tools take a window id as an argument. all of them will either read the id streamed in through stdin, or via the positional arguments of the command when it's run. they do this automatically so you can use them either way without needing to change any flags or commands.
 
-## tools provided by ugh
-note: most of the supplied tools take a window id as an argument.  all of these tools will either read the id streamed in through stdin, or via the positional arguments of the command when it's run.  they do this automatically so you can use them either way.
+this allows the user to pipe commands together with the window id never having to be written out, or if you're doing multiple commands to the same window you can specify it from a shell variable.
 
-this allows the user to pipe commands together with the window id never having to be written out, or if you're doing multiple commands to the same window you can specify it from a shell variable or by hand.
+in addition, those same utilities will output the input window id back to stdout to allow further chaining of commands.  they will all accept the optional ```-q``` flag to silence the output.
 
-### ugh
-```ugh``` holds open the X connection, acting as a *de facto* wm.  there's a few key combinations supported:
+#### ugh-fm 
+```usage: ugh-fm```
 
-```ctrl + mod1 + enter``` - spawns the lancher_cmd
+the ugh focus manager.  run this in place of a wm in your .xsession/.xinitrc
+provides the following revolutionary and paradigm-shifting features:
+- a focus-follows-mouse model 
+- infinitely loops so your X connection stays open even with no applications running
+- "cleanly" closes all windows and exits when it receives SIGHUP
 
-```mod1 + [shift +] tab``` - cycle through visible windows
+#### ugh-list
+```usage: ugh-list```
 
-```ctrl + mod1 + q``` - cleanly quits ugh: destroys remaining windows and releases its connection to the xserver
+lists to stdout all top-level windows in the following format (1 entry per line):
 
-these are all defined in ```ugh.c```.  they're rather hardcoded in, but there's so few of them it's trivial to change.
+```<window id>,<window title>,<x geometry string>```
 
-the ```launcher_cmd``` variable near the head of the file determines what is launched by ugh.  in the current source, it just launches ```dmenu_run``` with default options.
+#### ugh-id
+```usage: ugh-id <search term>```
 
-other than that all it does is lazily adjust the input focus based on window creation and mouse enter events.
+searches the top-level windows for the first window whose title contains the search term, then outputs the window id to stdout.
 
-### ugh-list
-```ugh-list``` simply lists all the children of the root window to stdout in the format: window-id,window title,x,y,w,h
+#### ugh-circ
+```usage: ugh-circ [{1,0}]```
 
-using csv makes it easy to use ```cut``` or ```awk``` to strip information from the results
+circulates the top-level windows up(1) or down(0).  if no direction is provided, it circulates down.
 
-### ugh-id
-```ugh-id <search term>``` takes a word and searches the children of the root window for any window title containing the search term, then outputs the window id to stdout
+#### ugh-raise
+```usage: ugh-raise [-q] [<window id>]```
 
-it's similar to using ```ugh-list``` and ```grep``` together, but only outputs the window-id of the first match, or is silent on no match.
+raises \<window id> to the top of the stack.
 
-TODO: cycle through all the child windows as well.
+#### ugh-lower
+```usage: ugh-lower [-q] [<window id>]```
 
-### ugh-top
-```ugh-top``` takes the top-most window on the stack and outputs the window-id to stdout.  if no windows are visible it is silent.
+lowers \<window id> to the bottom of the stack.
 
-TODO: cycle through all the child windows as well. 
+#### ugh-move
+```usage: ugh-move [-q] [<window id>] <x geometry string>```
 
-### ugh-move
-```ugh-move [window id] <x> <y>``` takes a window id as well as x,y coordinates on screen to change the window's origin.  if no id or a bad id, silently exits.
+moves and/or resizes \<window id> according to \<x geometry sting>.
 
-note:  this does not raise the window
+#### ugh-max
+```usage: ugh-max [-q] [<window id>]```
 
-### ugh-resize
-```ugh-resize [window id] <w> <h>``` takes a window id as well as the new width and height to change the window's size.  if no id or a bad id, silently exits.
+raises \<window id> to the top of the stack and resizes it to the size of the display.
 
-note:  this does not raise the window
+#### ugh-hide
+```usage: ugh-hide [-q] [<window id>]```
 
-### ugh-mar
-```ugh-mar [window id] <x> <y> <w> <h>``` takes a window id as well as the new origin x,y and new width and height , then moves and resizes the window.  on no active window or no supplied id (such as from a previous call being piped in), silently exits.
+unmaps \<window id>.  still visible by ugh-list and ugh-id
 
-note:  this does not raise the window
+#### ugh-unhide
+```usage: ugh-unhide [-q] [<window id>]```
 
-### ugh-hide
-```ugh-hide [window id]``` takes a window id and unmaps the window, hiding it.  if no id or a bad id, silently exits.
+remaps \<window id> and brings it to the top of the stack.
 
-hidden windows are still searchable via ```ugh-id``` and ```ugh-list```.
-
-### ugh-lower
-```ugh-lower [window id]``` takes a window id and moves the window to the bottom of the stack.  if no id or a bad id, silently exits.
-
-### ugh-raise
-```ugh-raise [window id]``` takes a window id and moves the window to the top of the stack.  if no id or a bad id, silently exits.
-
-### ugh-focus
-```ugh-focus [window id]``` takes a window id and sets keyboard and mouse focus to that window.  if no id or a bad id, silently exits.
-
-### ugh-rotate
-```ugh-rotate [<1|0>]``` cycles the window stack up (1) or down (0).  if no input is supplied, it cycles them up.
-
-### ugh-iconify
-```ugh-iconify [window id]``` takes a window id and iconifies that window.  if no id or a bad id, silently exits.
-
-this is probably never going to be used.
+## license
+***"intellectual property is robbery."*** -- proudhon, probably.
